@@ -3,10 +3,90 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
 package com.scuffedsoftware.studybomb;
+import javax.swing.text.*;
+import javax.swing.JOptionPane;
+import java.awt.*;
+import java.awt.font.TextAttribute;
+import java.util.Map;
+import java.util.HashMap;
 
+class timerFilter extends DocumentFilter {
+    
+    private boolean filter(String text) {
+        //If the string is not an integer, return false.
+        if (text.matches("[0-9]+")) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
+    @Override
+    public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr) 
+            throws BadLocationException {
+        Document doc = fb.getDocument();
+        StringBuilder timerText = new StringBuilder();
+        timerText.append(doc.getText(0,doc.getLength()));
+        
+        if (filter(timerText.toString())) {
+            super.insertString(fb, offset, string, attr);
+            if (timerText.length() <= 8) {
+                super.remove(fb, 0, 1);
+            if (timerText.length() < 8) {
+                super.insertString(fb, 0, string,attr);
+                }
+            }
+        } else {
+            Toolkit.getDefaultToolkit().beep();
+        }
+    }
+    
+    @Override
+       public void replace(FilterBypass fb, int offset, int length, String text, 
+               AttributeSet attrs) throws BadLocationException {
+
+      Document doc = fb.getDocument();
+      StringBuilder timerText = new StringBuilder();
+      timerText.append(doc.getText(0, doc.getLength()));
+      timerText.replace(offset, offset + length, text);
+
+      //If filter returns true, allow replacement. If too few characters exist,
+      //...initiate removal.
+      if (filter(timerText.toString())) {
+         super.replace(fb, offset, length, text, attrs); //TODO: fix dis
+            if (timerText.length() <= 7) {
+                super.remove(fb, 0, 1);
+            }
+            if (timerText.length() < 7) {
+                //If the character at the start is 0, insert 0. 
+                //if NOT, replace the string with whatever was in the first slot
+                super.insertString(fb, 0, timerText.substring(0, 1),null);
+                }
+      } else {
+         // nothing! :)
+      }
+   }
+       
+   @Override
+   public void remove(FilterBypass fb, int offset, int length)
+         throws BadLocationException {
+      Document doc = fb.getDocument();
+      StringBuilder sb = new StringBuilder();
+      sb.append(doc.getText(0, doc.getLength()));
+      sb.delete(offset, offset + length);
+      
+      if (filter(sb.toString())) {
+         super.remove(fb, offset, length);
+         super.insertString(fb, 0, "0",null);
+      } else {
+         // nothing! :)
+      }
+
+   }
+}
 /**
  *
- * @author Toni Flamboni
+ * @author Ismael Fuentes
  */
 public class StudyBomb extends javax.swing.JFrame {
 
@@ -26,37 +106,40 @@ public class StudyBomb extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        fileExplorer = new javax.swing.JFileChooser();
-        textInput = new javax.swing.JTextField();
-        convertAction = new javax.swing.JButton();
-        jButton1 = new javax.swing.JButton();
-        timerInput = new javax.swing.JFormattedTextField();
+        jPopupMenu1 = new javax.swing.JPopupMenu();
+        timerDialog = new javax.swing.JFrame();
         jButton2 = new javax.swing.JButton();
-        jButton3 = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        timerPanel = new javax.swing.JPanel();
+        timerUI = new javax.swing.JLabel();
+        timerRuler = new javax.swing.JLabel();
+        timerInput = new javax.swing.JTextField();
+        Font timerFont = new Font("Helvetica Neue",0,68);
+        Map<TextAttribute,Object> attributes = new HashMap<TextAttribute,Object>();
+        attributes.put(TextAttribute.TRACKING, 0.3);
+        timerFont = timerFont.deriveFont(attributes);
+        filterGUISetup(); //Assigns DocumentFilters to input field
+        timerDisplay = new javax.swing.JLabel();
+        timerControls = new javax.swing.JPanel();
+        startButton = new javax.swing.JButton();
+        stopButton = new javax.swing.JButton();
+
+        javax.swing.GroupLayout timerDialogLayout = new javax.swing.GroupLayout(timerDialog.getContentPane());
+        timerDialog.getContentPane().setLayout(timerDialogLayout);
+        timerDialogLayout.setHorizontalGroup(
+            timerDialogLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 400, Short.MAX_VALUE)
+        );
+        timerDialogLayout.setVerticalGroup(
+            timerDialogLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 300, Short.MAX_VALUE)
+        );
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setTitle("Celsius Converter");
-
-        convertAction.setText("Convert");
-        convertAction.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                convertActionActionPerformed(evt);
-            }
-        });
-
-        jButton1.setText("jButton1");
-
-        timerInput.setBorder(null);
-        timerInput.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-        timerInput.setText("00:00:00");
-        timerInput.setToolTipText("Type in how long you plan on studying for.");
-        timerInput.setFont(new java.awt.Font("Helvetica Neue", 0, 36)); // NOI18N
-        timerInput.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                timerInputActionPerformed(evt);
-            }
-        });
+        setTitle("StudyBomb");
+        setAutoRequestFocus(false);
+        setResizable(false);
 
         jButton2.setText("jButton2");
         jButton2.addActionListener(new java.awt.event.ActionListener() {
@@ -65,85 +148,201 @@ public class StudyBomb extends javax.swing.JFrame {
             }
         });
 
-        jButton3.setText("jButton3");
-
         jLabel1.setText("Choose a file...");
+
+        timerPanel.setLayout(null);
+
+        timerUI.setFont(new java.awt.Font("Helvetica Neue", 0, 68)); // NOI18N
+        timerUI.setText("    :     : ");
+        timerPanel.add(timerUI);
+        timerUI.setBounds(30, 20, 350, 60);
+
+        timerRuler.setFont(new java.awt.Font("Helvetica Neue", 0, 24)); // NOI18N
+        timerRuler.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        timerRuler.setText("h              m              s");
+        timerRuler.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
+        timerRuler.setAlignmentY(1.0F);
+        timerRuler.setFocusable(false);
+        timerPanel.add(timerRuler);
+        timerRuler.setBounds(110, 71, 340, 29);
+
+        timerInput.setBackground(new java.awt.Color(204, 204, 204));
+        timerInput.setFont(timerFont);
+        timerInput.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+        timerInput.setText("000000");
+        timerInput.setBorder(null);
+        timerInput.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                timerInputMouseClicked(evt);
+            }
+        });
+        timerPanel.add(timerInput);
+        timerInput.setBounds(0, 0, 370, 103);
+
+        timerDisplay.setFont(timerFont);
+        timerDisplay.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        timerDisplay.setText("000000");
+        timerDisplay.setEnabled(false);
+        timerPanel.add(timerDisplay);
+        timerDisplay.setBounds(10, 20, 350, 60);
+
+        timerControls.setLayout(new java.awt.CardLayout());
+
+        startButton.setText("Start");
+        startButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                startButtonActionPerformed(evt);
+            }
+        });
+        timerControls.add(startButton, "card3");
+
+        stopButton.setText("Stop");
+        stopButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                stopButtonActionPerformed(evt);
+            }
+        });
+        timerControls.add(stopButton, "card2");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
+                .addGap(8, 8, 8)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 257, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(textInput)
-                            .addComponent(convertAction, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addGap(6, 6, 6)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(39, 39, 39))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(timerInput, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(19, 19, 19))))))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(190, Short.MAX_VALUE)
-                .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel1)
-                .addGap(38, 38, 38))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jLabel1))
+                            .addComponent(timerPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 370, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(115, 115, 115)
+                        .addComponent(timerControls, javax.swing.GroupLayout.PREFERRED_SIZE, 145, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
-
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {convertAction, textInput});
-
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(textInput, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(convertAction)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 264, Short.MAX_VALUE)
+                .addGap(27, 27, 27)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 478, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addGap(0, 0, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jButton2)
-                    .addComponent(jButton3)
                     .addComponent(jLabel1))
-                .addGap(18, 18, 18)
-                .addComponent(timerInput, javax.swing.GroupLayout.PREFERRED_SIZE, 64, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(timerPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 103, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(timerControls, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(15, 15, 15))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void convertActionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_convertActionActionPerformed
-        // TODO add your handling code here:
-            //Parse degrees Celsius as a double and convert to Fahrenheit.
-//    int tempFahr = (int)((Double.parseDouble(textInput.getText()))
-//            * 1.8 + 32);
-//    convertLabel.setText(tempFahr + " Fahrenheit");
-    }//GEN-LAST:event_convertActionActionPerformed
-
-    private void timerInputActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_timerInputActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_timerInputActionPerformed
-
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         // TODO add your handling code here:
-        fileExplorer.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+//        fileExplorer.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
     }//GEN-LAST:event_jButton2ActionPerformed
 
+    private void startButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startButtonActionPerformed
+
+        int userChoice = JOptionPane.showConfirmDialog(timerDialog,
+                "Please note that I wasn't joking about deleting your files. \n\n"
+                        + "**I will actually delete them. They will be unrecoverable.**\n\n"
+                        + "These files will delete once your allotted time is up. "
+                        + "After 20% of your time has passed, you can opt to cancel early. \n"
+                        + "I take no responsibility for damage caused by any lost files.\n"
+                        + "Before you begin, ensure you have enough time without outside interference."
+                        + "Would you like to continue? Accepting will instantly start the timer.",
+                "Warning",JOptionPane.YES_NO_OPTION);
+        switch (userChoice) {
+            case JOptionPane.YES_OPTION:
+                timerInput.setVisible(false);
+                timerInput.setEnabled(false);
+                timerDisplay.setEnabled(true);
+                timerDisplay.setText(timerInput.getText());
+                
+                startButton.setVisible(false);
+                startButton.setEnabled(false);
+                stopButton.setVisible(true);
+                stopButton.setEnabled(true);
+                //TODO: Once I figure out CardLayout, rewrite this. it's ugly and makes me cry
+                //by extension, rewrite this whole thing. it is UGLY
+                
+                TimerAssist.timerStart(timerDisplay.getText(),timerDisplay); //starts the timer
+                break;
+                
+            case JOptionPane.NO_OPTION:
+                break;
+        //
+            default:
+                break;
+        }
+    }//GEN-LAST:event_startButtonActionPerformed
+
+    private void stopButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopButtonActionPerformed
+        TimerAssist.timerStop();
+        JOptionPane.showMessageDialog(timerDialog,"Coward.");
+        
+        
+        timerInput.setVisible(true);
+        timerInput.setEnabled(true);
+        timerDisplay.setEnabled(false);
+        timerDisplay.setText("000000");
+                
+        startButton.setVisible(true);
+        startButton.setEnabled(true);
+        stopButton.setVisible(false);
+        stopButton.setEnabled(false);
+        //TODO: make this look better someday, it makes my eyes water
+        
+    }//GEN-LAST:event_stopButtonActionPerformed
+
+    private void timerInputMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_timerInputMouseClicked
+// corrects user input if the minute/second counter exceeds 59
+    StringBuilder timerTextEdit = new StringBuilder(timerInput.getText());
+    
+    if (Integer.parseInt(timerTextEdit.substring(2,4)) > 59) {
+        timerTextEdit.replace(2,4,"59");
+        System.out.println("minute display invalid! correcting...");
+        }
+    
+    if (Integer.parseInt(timerTextEdit.substring(4,6)) > 59) {
+        timerTextEdit.replace(4,6,"59");
+        System.out.println("second display invalid! correcting...");
+        }
+    
+    timerInput.setText(timerTextEdit.toString()); //NEARLY works!! just removes a 
+    
+    if (timerInput.getText() != timerTextEdit.toString()) {
+        System.out.println("text insertion failed!!\n-----------");
+        System.out.println("current text: " + timerInput.getText());
+        System.out.println("edited text: " + timerTextEdit.toString());
+    }
+    }//GEN-LAST:event_timerInputMouseClicked
+
+    private void filterGUISetup() {
+        Document timerDoc = timerInput.getDocument();
+        AbstractDocument doc;
+        
+        if (timerDoc instanceof AbstractDocument) {
+            doc = (AbstractDocument)timerDoc;
+            doc.setDocumentFilter(new timerFilter());
+        }
+    }
+    
     /**
      * @param args the command line arguments
      */
+    
+    
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
@@ -169,22 +368,30 @@ public class StudyBomb extends javax.swing.JFrame {
         //</editor-fold>
         //</editor-fold>
 
-        /* Create and display the form */
+        /* Create and display the form. */
+        
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 new StudyBomb().setVisible(true);
+                
+                
             }
         });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton convertAction;
-    private javax.swing.JFileChooser fileExplorer;
-    private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
-    private javax.swing.JButton jButton3;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JTextField textInput;
-    protected javax.swing.JFormattedTextField timerInput;
+    private javax.swing.JPopupMenu jPopupMenu1;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JButton startButton;
+    private javax.swing.JButton stopButton;
+    private javax.swing.JPanel timerControls;
+    private javax.swing.JFrame timerDialog;
+    private javax.swing.JLabel timerDisplay;
+    private javax.swing.JTextField timerInput;
+    private javax.swing.JPanel timerPanel;
+    private javax.swing.JLabel timerRuler;
+    private javax.swing.JLabel timerUI;
     // End of variables declaration//GEN-END:variables
 }
