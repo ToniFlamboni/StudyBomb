@@ -8,18 +8,20 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JLabel;
 import javax.swing.Timer;
+import java.io.File;
 
 /**
  *
  * @author Ismael Fuentes
  */
-public final class TimerAssist {
+final class TimerAssist {
     public static JLabel timerDisplay;
     private static String timerInput;
     private static int hour;
     private static int minute;
     private static int second;
     private static Timer bomb;
+    private static File fileToDelete;
         
     private static void parseTimer() {
         hour = Integer.parseInt(timerInput.substring(0, 2));
@@ -48,9 +50,11 @@ public final class TimerAssist {
         bomb.stop();
     }
     
-    public static void timerStart(String input, JLabel uiElement) {
+    public static void timerStart(String input, JLabel uiElement, File target) {
         timerInput = input;
         timerDisplay = uiElement;
+        fileToDelete = target;
+        
         parseTimer(); //Sets values for all time variables
         bomb = new Timer(1000,timerLogic);
         bomb.start();
@@ -64,8 +68,9 @@ public final class TimerAssist {
             if (second == 0) {
                 if (minute == 0) {
                     if (hour == 0) {
-//                      DeleteAssist.kaboom();
-                        timerDisplay.setText("BOOM!");
+                      DeleteAssist.kaboom(fileToDelete);
+                      timerDisplay.setText("BOOM!");
+                      timerStop();
                     } else {
                         hour--;
                         minute = 59;

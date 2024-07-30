@@ -87,12 +87,23 @@ class timerFilter extends DocumentFilter {
       }
    }
 }
+
+final class DeleteAssist { 
+    private File target;
+    
+    public static void kaboom(File target) {
+        System.out.println("FAREWELL, BOYE!");
+        target.delete();
+    }
+    
+}
 /**
  *
  * @author Ismael Fuentes
  */
 public class StudyBomb extends javax.swing.JFrame {
-
+    private File fileTarget;
+    
     /**
      * Creates new form StudyBombGUI
      */
@@ -300,8 +311,8 @@ public class StudyBomb extends javax.swing.JFrame {
         // TODO add your handling code here:
         int userChoice = fileExplorer.showOpenDialog(this);
         if (userChoice == JFileChooser.APPROVE_OPTION) {
-            File target = fileExplorer.getSelectedFile();
-            fileLabel.setText(target.getPath());
+            this.fileTarget = fileExplorer.getSelectedFile();
+            fileLabel.setText(fileTarget.getPath());
         }
     }//GEN-LAST:event_fileSearchButtonActionPerformed
 
@@ -318,16 +329,21 @@ public class StudyBomb extends javax.swing.JFrame {
                 "Warning",JOptionPane.YES_NO_OPTION);
         switch (userChoice) {
             case JOptionPane.YES_OPTION:
+                if (fileTarget == null) {
+                    JOptionPane.showMessageDialog(timerDialog,"No file has been selected.");
+                    break;
+                } else {
                 timerInput.setVisible(false);
                 timerInput.setEnabled(false);
                 timerDisplay.setEnabled(true);
                 timerDisplay.setText(timerInput.getText());
                 
+                
                 startButton.setVisible(false);
                 startButton.setEnabled(false);
                 stopButton.setVisible(true);
                 stopButton.setEnabled(true);
-
+                taskAddButton.setEnabled(false);
                 //TODO: Once I figure out CardLayout, rewrite this. it's ugly and makes me cry
                 //by extension, rewrite this whole thing. it is UGLY
                 
@@ -337,9 +353,9 @@ public class StudyBomb extends javax.swing.JFrame {
                     });
                 }
                 
-                TimerAssist.timerStart(timerDisplay.getText(),timerDisplay); //starts the timer
+                TimerAssist.timerStart(timerDisplay.getText(),timerDisplay, fileTarget); //starts the timer
                 break;
-                
+                }
             case JOptionPane.NO_OPTION:
                 break;
         //
@@ -362,6 +378,7 @@ public class StudyBomb extends javax.swing.JFrame {
         startButton.setEnabled(true);
         stopButton.setVisible(false);
         stopButton.setEnabled(false);
+        taskAddButton.setEnabled(true);
         //TODO: make this look better someday, it makes my eyes water
         
     }//GEN-LAST:event_stopButtonActionPerformed
