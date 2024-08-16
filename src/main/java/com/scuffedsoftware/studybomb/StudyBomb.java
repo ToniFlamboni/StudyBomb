@@ -10,8 +10,10 @@ import javax.swing.JOptionPane;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.TextAttribute;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Arrays;
 
 
 class timerFilter extends DocumentFilter {
@@ -89,11 +91,47 @@ class timerFilter extends DocumentFilter {
 }
 
 final class DeleteAssist { 
-    private File target;
+    private static ArrayList<File> files = new ArrayList();
+    private static ArrayList<File> folders = new ArrayList();
     
     public static void kaboom(File target) {
-        System.out.println("FAREWELL, BOYE!");
+    targetParse(target);
+    
+        for (File file : files) {
+            System.out.println("deleted" + file.getName() + "!");
+            file.delete();
+            
+        }
+        
+        for (File folder : folders) {
+            System.out.println("deleted " + folder.getName() + "!");
+            folder.delete();
+            
+        }
+        
         target.delete();
+    
+    System.out.println("see ya!");
+    }
+    
+    /**
+        Parses all files and subdirectories of a given target, adding both into
+        corresponding ArrayLists.
+    */
+    private static void targetParse(File target) {
+        
+        File[] tempList = target.listFiles();
+        if (tempList == null) {
+            return;
+        }
+        for (File item : tempList) {
+            if (item.listFiles() == null) {
+                files.add(item);
+            } else {
+                targetParse(item);
+                folders.add(item);
+            }
+        }
     }
     
 }
@@ -103,6 +141,7 @@ final class DeleteAssist {
  */
 public class StudyBomb extends javax.swing.JFrame {
     private File fileTarget;
+    private ArrayList<Task> taskList = new ArrayList();
     
     /**
      * Creates new form StudyBombGUI
@@ -119,7 +158,6 @@ public class StudyBomb extends javax.swing.JFrame {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
-        java.awt.GridBagConstraints gridBagConstraints;
 
         timerDialog = new javax.swing.JFrame();
         fileExplorer = new javax.swing.JFileChooser();
@@ -141,6 +179,7 @@ public class StudyBomb extends javax.swing.JFrame {
         fileLabel = new javax.swing.JLabel();
         taskView = new javax.swing.JLayeredPane();
         taskAddButton = new javax.swing.JButton();
+        taskClearButton = new javax.swing.JButton();
         taskScroll = new javax.swing.JScrollPane();
         taskPanel = new javax.swing.JPanel();
 
@@ -238,11 +277,19 @@ public class StudyBomb extends javax.swing.JFrame {
             }
         });
 
+        taskClearButton.setText("+");
+        taskClearButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                taskClearButtonActionPerformed(evt);
+            }
+        });
+
         taskPanel.setRequestFocusEnabled(false);
         taskPanel.setLayout(new javax.swing.BoxLayout(taskPanel, javax.swing.BoxLayout.PAGE_AXIS));
         taskScroll.setViewportView(taskPanel);
 
         taskView.setLayer(taskAddButton, javax.swing.JLayeredPane.DEFAULT_LAYER);
+        taskView.setLayer(taskClearButton, javax.swing.JLayeredPane.DEFAULT_LAYER);
         taskView.setLayer(taskScroll, javax.swing.JLayeredPane.DEFAULT_LAYER);
 
         javax.swing.GroupLayout taskViewLayout = new javax.swing.GroupLayout(taskView);
@@ -252,7 +299,9 @@ public class StudyBomb extends javax.swing.JFrame {
             .addGroup(taskViewLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(taskAddButton, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(235, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(taskClearButton, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(187, Short.MAX_VALUE))
             .addGroup(taskViewLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(taskViewLayout.createSequentialGroup()
                     .addContainerGap()
@@ -262,13 +311,15 @@ public class StudyBomb extends javax.swing.JFrame {
         taskViewLayout.setVerticalGroup(
             taskViewLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, taskViewLayout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(taskAddButton, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(462, Short.MAX_VALUE)
+                .addGroup(taskViewLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(taskAddButton, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(taskClearButton, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
             .addGroup(taskViewLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(taskViewLayout.createSequentialGroup()
                     .addContainerGap()
-                    .addComponent(taskScroll)
+                    .addComponent(taskScroll, javax.swing.GroupLayout.DEFAULT_SIZE, 488, Short.MAX_VALUE)
                     .addContainerGap()))
         );
 
@@ -320,11 +371,11 @@ public class StudyBomb extends javax.swing.JFrame {
 
         int userChoice = JOptionPane.showConfirmDialog(timerDialog,
                 "Please note that I wasn't joking about deleting your files. \n\n"
-                        + "**I will actually delete them. They will be unrecoverable.**\n\n"
+                        + "I will actually delete them. They will be unrecoverable.\n\n"
                         + "These files will delete once your allotted time is up. "
                         + "After 20% of your time has passed, you can opt to cancel early. \n"
                         + "I take no responsibility for damage caused by any lost files.\n"
-                        + "Before you begin, ensure you have enough time without outside interference."
+                        + "Before you begin, ensure you have enough time without outside interference.\n\n"
                         + "Would you like to continue? Accepting will instantly start the timer.",
                 "Warning",JOptionPane.YES_NO_OPTION);
         switch (userChoice) {
@@ -365,10 +416,13 @@ public class StudyBomb extends javax.swing.JFrame {
     }//GEN-LAST:event_startButtonActionPerformed
 
     private void stopButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopButtonActionPerformed
+        if (timerDisplay.getText() == "000000") {
+            JOptionPane.showMessageDialog(timerDialog,"KABOOM! Time's up.");
+        } else {
+            JOptionPane.showMessageDialog(timerDialog,"Coward.");
+        }       
         TimerAssist.timerStop();
-        JOptionPane.showMessageDialog(timerDialog,"Coward.");
-        
-        
+
         timerInput.setVisible(true);
         timerInput.setEnabled(true);
         timerDisplay.setEnabled(false);
@@ -396,26 +450,32 @@ public class StudyBomb extends javax.swing.JFrame {
         }
     
     timerInput.setText(timerTextEdit.toString());
-    
-//    if (timerInput.getText() != timerTextEdit.toString()) {
-//        System.out.println("text insertion failed!!\n-----------");
-//        System.out.println("current text: " + timerInput.getText());
-//        System.out.println("edited text: " + timerTextEdit.toString());
-//    }
     }//GEN-LAST:event_timerInputMouseClicked
 
     private void taskAddButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_taskAddButtonActionPerformed
                 Task newTask = new Task(startButton);
                 newTask.setAlignmentY(Component.TOP_ALIGNMENT);
                 
-                //TODO: make the 
                 taskPanel.add(newTask);
-                System.out.println(taskPanel.getClass());
+                taskList.add(newTask);
 
                 // Revalidate and repaint the panel to show the new button
                 taskPanel.revalidate();
                 taskPanel.repaint();
     }//GEN-LAST:event_taskAddButtonActionPerformed
+
+    private void taskClearButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_taskClearButtonActionPerformed
+        for (Task item : taskList) {
+                item = null; { //Deletes all tasks
+            }
+        }
+        taskList.clear();
+        
+        //Removes all task GUI elements, and revalidates/repaints the panel to reflect changes
+        taskPanel.removeAll();
+        taskPanel.revalidate();
+        taskPanel.repaint();
+    }//GEN-LAST:event_taskClearButtonActionPerformed
 
     private void filterGUISetup() {
         Document timerDoc = timerInput.getDocument();
@@ -439,12 +499,15 @@ public class StudyBomb extends javax.swing.JFrame {
          * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
          */
         try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
+//            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+//                if ("Nimbus".equals(info.getName())) {
+//                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+//                    break;
+//                }
+//            }
+        javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
+//        javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getCrossPlatformLookAndFeelClassName());
+//        javax.swing.UIManager.setLookAndFeel("com.sun.java.swing.plaf.motif.MotifLookAndFeel");
         } catch (ClassNotFoundException ex) {
             java.util.logging.Logger.getLogger(StudyBomb.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (InstantiationException ex) {
@@ -476,6 +539,7 @@ public class StudyBomb extends javax.swing.JFrame {
     private javax.swing.JButton startButton;
     private javax.swing.JButton stopButton;
     private javax.swing.JButton taskAddButton;
+    private javax.swing.JButton taskClearButton;
     private javax.swing.JPanel taskPanel;
     private javax.swing.JScrollPane taskScroll;
     private javax.swing.JLayeredPane taskView;
