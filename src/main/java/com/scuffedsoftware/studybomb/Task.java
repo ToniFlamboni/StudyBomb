@@ -16,15 +16,18 @@ import java.awt.event.*;
  * @author toni
  */
 public class Task extends javax.swing.JPanel {
+    StudyBomb host;
     JButton startButton;
     int actionCount = 0;
     
     /**
      * Creates new form Task
      * @param startSignal
+     * @param taskTarget
      */
-    public Task(JButton startSignal) {
+    public Task(StudyBomb taskTarget, JButton startSignal) {
         this.startButton = startSignal;
+        this.host = taskTarget;
         initComponents();
     }
 
@@ -194,6 +197,7 @@ public class Task extends javax.swing.JPanel {
     }//GEN-LAST:event_haha
 
     private void taskStatusBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_taskStatusBoxActionPerformed
+        host.taskCompleteCount += 1;
         taskComplete();
     }//GEN-LAST:event_taskStatusBoxActionPerformed
 

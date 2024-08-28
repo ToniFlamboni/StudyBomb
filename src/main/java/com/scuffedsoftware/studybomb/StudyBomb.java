@@ -13,7 +13,7 @@ import java.awt.font.TextAttribute;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.Arrays;
+import javax.swing.JLayeredPane;
 
 
 class timerFilter extends DocumentFilter {
@@ -142,6 +142,8 @@ final class DeleteAssist {
 public class StudyBomb extends javax.swing.JFrame {
     private File fileTarget;
     private ArrayList<Task> taskList = new ArrayList();
+    private int taskCount = 0;
+    int taskCompleteCount = 0;
     
     /**
      * Creates new form StudyBombGUI
@@ -161,16 +163,6 @@ public class StudyBomb extends javax.swing.JFrame {
 
         timerDialog = new javax.swing.JFrame();
         fileExplorer = new javax.swing.JFileChooser();
-        timerPanel = new javax.swing.JPanel();
-        timerUI = new javax.swing.JLabel();
-        timerRuler = new javax.swing.JLabel();
-        timerInput = new javax.swing.JTextField();
-        Font timerFont = new Font("Helvetica Neue",0,68);
-        Map<TextAttribute,Object> attributes = new HashMap<TextAttribute,Object>();
-        attributes.put(TextAttribute.TRACKING, 0.3);
-        timerFont = timerFont.deriveFont(attributes);
-        filterGUISetup(); //Assigns DocumentFilters to input field
-        timerDisplay = new javax.swing.JLabel();
         timerControls = new javax.swing.JPanel();
         startButton = new javax.swing.JButton();
         stopButton = new javax.swing.JButton();
@@ -178,10 +170,29 @@ public class StudyBomb extends javax.swing.JFrame {
         fileSearchButton = new javax.swing.JButton();
         fileLabel = new javax.swing.JLabel();
         taskView = new javax.swing.JLayeredPane();
-        taskAddButton = new javax.swing.JButton();
-        taskClearButton = new javax.swing.JButton();
         taskScroll = new javax.swing.JScrollPane();
         taskPanel = new javax.swing.JPanel();
+        taskControlPanel = new javax.swing.JPanel();
+        taskAddButton = new javax.swing.JButton();
+        taskClearButton = new javax.swing.JButton();
+        timerPanel = new javax.swing.JLayeredPane();
+        timerInput = new javax.swing.JTextField();
+        Font timerFont = null;
+        try { //Opens the font file and creates appropriate text attributes
+            File fontStyle = new File("src/main/resources/fonts/RobotoMono-Italic.ttf");
+            timerFont = Font.createFont(Font.TRUETYPE_FONT, fontStyle).deriveFont(44f);
+            Map<TextAttribute,Object> attributes = new HashMap<TextAttribute,Object>();
+            attributes.put(TextAttribute.TRACKING, 0.3);
+            timerFont = timerFont.deriveFont(attributes);
+            timerInput.setFont(timerFont);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Map<TextAttribute,Object> attributes = new HashMap<TextAttribute,Object>();
+        attributes.put(TextAttribute.TRACKING, 0.3);
+        filterGUISetup(); //Assigns DocumentFilters to input field
+        timerUI = new javax.swing.JLabel();
+        timerDisplay = new javax.swing.JLabel();
 
         javax.swing.GroupLayout timerDialogLayout = new javax.swing.GroupLayout(timerDialog.getContentPane());
         timerDialog.getContentPane().setLayout(timerDialogLayout);
@@ -202,42 +213,6 @@ public class StudyBomb extends javax.swing.JFrame {
         setTitle("StudyBomb");
         setAutoRequestFocus(false);
         setResizable(false);
-
-        timerPanel.setLayout(null);
-
-        timerUI.setFont(new java.awt.Font("Helvetica Neue", 0, 68)); // NOI18N
-        timerUI.setText("    :     : ");
-        timerPanel.add(timerUI);
-        timerUI.setBounds(30, 20, 350, 60);
-
-        timerRuler.setFont(new java.awt.Font("Helvetica Neue", 0, 24)); // NOI18N
-        timerRuler.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        timerRuler.setText("h              m              s");
-        timerRuler.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
-        timerRuler.setAlignmentY(1.0F);
-        timerRuler.setFocusable(false);
-        timerPanel.add(timerRuler);
-        timerRuler.setBounds(110, 71, 340, 29);
-
-        timerInput.setBackground(new java.awt.Color(204, 204, 204));
-        timerInput.setFont(timerFont);
-        timerInput.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-        timerInput.setText("000000");
-        timerInput.setBorder(null);
-        timerInput.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                timerInputMouseClicked(evt);
-            }
-        });
-        timerPanel.add(timerInput);
-        timerInput.setBounds(0, 0, 370, 103);
-
-        timerDisplay.setFont(timerFont);
-        timerDisplay.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        timerDisplay.setText("000000");
-        timerDisplay.setEnabled(false);
-        timerPanel.add(timerDisplay);
-        timerDisplay.setBounds(10, 20, 350, 60);
 
         timerControls.setLayout(new java.awt.CardLayout());
 
@@ -270,6 +245,10 @@ public class StudyBomb extends javax.swing.JFrame {
         fileLabel.setText("Choose a file...");
         filePanel.add(fileLabel);
 
+        taskPanel.setRequestFocusEnabled(false);
+        taskPanel.setLayout(new javax.swing.BoxLayout(taskPanel, javax.swing.BoxLayout.PAGE_AXIS));
+        taskScroll.setViewportView(taskPanel);
+
         taskAddButton.setText("+");
         taskAddButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -277,20 +256,36 @@ public class StudyBomb extends javax.swing.JFrame {
             }
         });
 
-        taskClearButton.setText("+");
+        taskClearButton.setText("Clear");
         taskClearButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 taskClearButtonActionPerformed(evt);
             }
         });
 
-        taskPanel.setRequestFocusEnabled(false);
-        taskPanel.setLayout(new javax.swing.BoxLayout(taskPanel, javax.swing.BoxLayout.PAGE_AXIS));
-        taskScroll.setViewportView(taskPanel);
+        javax.swing.GroupLayout taskControlPanelLayout = new javax.swing.GroupLayout(taskControlPanel);
+        taskControlPanel.setLayout(taskControlPanelLayout);
+        taskControlPanelLayout.setHorizontalGroup(
+            taskControlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(taskControlPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(taskAddButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(taskClearButton)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        taskControlPanelLayout.setVerticalGroup(
+            taskControlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(taskControlPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(taskControlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(taskAddButton, javax.swing.GroupLayout.PREFERRED_SIZE, 21, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(taskClearButton))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
 
-        taskView.setLayer(taskAddButton, javax.swing.JLayeredPane.DEFAULT_LAYER);
-        taskView.setLayer(taskClearButton, javax.swing.JLayeredPane.DEFAULT_LAYER);
         taskView.setLayer(taskScroll, javax.swing.JLayeredPane.DEFAULT_LAYER);
+        taskView.setLayer(taskControlPanel, javax.swing.JLayeredPane.DEFAULT_LAYER);
 
         javax.swing.GroupLayout taskViewLayout = new javax.swing.GroupLayout(taskView);
         taskView.setLayout(taskViewLayout);
@@ -298,29 +293,70 @@ public class StudyBomb extends javax.swing.JFrame {
             taskViewLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(taskViewLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(taskAddButton, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(taskClearButton, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(187, Short.MAX_VALUE))
-            .addGroup(taskViewLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(taskViewLayout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(taskScroll, javax.swing.GroupLayout.DEFAULT_SIZE, 271, Short.MAX_VALUE)
-                    .addContainerGap()))
+                .addGroup(taskViewLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(taskScroll)
+                    .addGroup(taskViewLayout.createSequentialGroup()
+                        .addComponent(taskControlPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 158, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         taskViewLayout.setVerticalGroup(
             taskViewLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, taskViewLayout.createSequentialGroup()
-                .addContainerGap(462, Short.MAX_VALUE)
-                .addGroup(taskViewLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(taskAddButton, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(taskClearButton, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addGroup(taskViewLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(taskScroll, javax.swing.GroupLayout.PREFERRED_SIZE, 462, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(taskControlPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+        );
+
+        timerInput.setBackground(java.awt.SystemColor.control);
+        timerInput.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+        timerInput.setText("000000");
+        timerInput.setBorder(null);
+        timerInput.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                timerInputMouseClicked(evt);
+            }
+        });
+
+        timerUI.setBackground(java.awt.SystemColor.control);
+        timerUI.setFont(timerFont);
+        timerUI.setText("   : : ");
+        timerUI.setRequestFocusEnabled(false);
+        timerUI.setVerifyInputWhenFocusTarget(false);
+
+        timerDisplay.setBackground(java.awt.SystemColor.control);
+        timerDisplay.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        timerDisplay.setFont(timerFont);
+        timerDisplay.setText("000000");
+        timerDisplay.setEnabled(false);
+
+        timerPanel.setLayer(timerInput, javax.swing.JLayeredPane.DEFAULT_LAYER);
+        timerPanel.setLayer(timerUI, javax.swing.JLayeredPane.DEFAULT_LAYER);
+        timerPanel.setLayer(timerDisplay, javax.swing.JLayeredPane.DEFAULT_LAYER);
+
+        javax.swing.GroupLayout timerPanelLayout = new javax.swing.GroupLayout(timerPanel);
+        timerPanel.setLayout(timerPanelLayout);
+        timerPanelLayout.setHorizontalGroup(
+            timerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, timerPanelLayout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(timerInput, javax.swing.GroupLayout.PREFERRED_SIZE, 371, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
-            .addGroup(taskViewLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(taskViewLayout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(taskScroll, javax.swing.GroupLayout.DEFAULT_SIZE, 488, Short.MAX_VALUE)
-                    .addContainerGap()))
+            .addGroup(timerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(timerPanelLayout.createSequentialGroup()
+                    .addComponent(timerUI, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addContainerGap())
+                .addComponent(timerDisplay, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 383, Short.MAX_VALUE))
+        );
+        timerPanelLayout.setVerticalGroup(
+            timerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, timerPanelLayout.createSequentialGroup()
+                .addGap(0, 0, Short.MAX_VALUE)
+                .addComponent(timerInput, javax.swing.GroupLayout.PREFERRED_SIZE, 103, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addGroup(timerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(timerUI, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(timerDisplay, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 103, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -330,27 +366,32 @@ public class StudyBomb extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(taskView, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(timerPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 371, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(filePanel, javax.swing.GroupLayout.PREFERRED_SIZE, 363, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(103, 103, 103)
-                        .addComponent(timerControls, javax.swing.GroupLayout.PREFERRED_SIZE, 145, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(filePanel, javax.swing.GroupLayout.PREFERRED_SIZE, 363, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(103, 103, 103)
+                                .addComponent(timerControls, javax.swing.GroupLayout.PREFERRED_SIZE, 145, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(81, 81, 81)
+                        .addComponent(timerPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(101, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(taskView, javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 300, Short.MAX_VALUE)
+                        .addContainerGap()
+                        .addComponent(taskView))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(83, 83, 83)
+                        .addComponent(timerPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(filePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(timerPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 103, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGap(127, 127, 127)
                         .addComponent(timerControls, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addGap(9, 9, 9))
         );
@@ -380,7 +421,7 @@ public class StudyBomb extends javax.swing.JFrame {
                 "Warning",JOptionPane.YES_NO_OPTION);
         switch (userChoice) {
             case JOptionPane.YES_OPTION:
-                if (fileTarget == null) {
+                if (fileTarget != null) {
                     JOptionPane.showMessageDialog(timerDialog,"No file has been selected.");
                     break;
                 } else {
@@ -405,6 +446,9 @@ public class StudyBomb extends javax.swing.JFrame {
                 }
                 
                 TimerAssist.timerStart(timerDisplay.getText(),timerDisplay, fileTarget); //starts the timer
+                
+                System.out.println(timerInput.getFont());
+                System.out.println(timerDisplay.getFont());
                 break;
                 }
             case JOptionPane.NO_OPTION:
@@ -416,18 +460,25 @@ public class StudyBomb extends javax.swing.JFrame {
     }//GEN-LAST:event_startButtonActionPerformed
 
     private void stopButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopButtonActionPerformed
-        if (timerDisplay.getText() == "000000") {
+        if (taskCompleteCount != taskCount) {
+            JOptionPane.showMessageDialog(timerDialog, "HEY! All tasks haven't been completed yet!");
+            return;
+        }
+        
+        if ("000000".equals(timerDisplay.getText())) {
             JOptionPane.showMessageDialog(timerDialog,"KABOOM! Time's up.");
         } else {
             JOptionPane.showMessageDialog(timerDialog,"Coward.");
         }       
+        
         TimerAssist.timerStop();
 
         timerInput.setVisible(true);
         timerInput.setEnabled(true);
         timerDisplay.setEnabled(false);
         timerDisplay.setText("000000");
-                
+        taskCompleteCount = 0;        
+        
         startButton.setVisible(true);
         startButton.setEnabled(true);
         stopButton.setVisible(false);
@@ -450,15 +501,19 @@ public class StudyBomb extends javax.swing.JFrame {
         }
     
     timerInput.setText(timerTextEdit.toString());
+    timerPanel.setLayer(timerUI, JLayeredPane.DRAG_LAYER);
+    timerPanel.setLayer(timerInput, JLayeredPane.DEFAULT_LAYER);
+    
     }//GEN-LAST:event_timerInputMouseClicked
 
     private void taskAddButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_taskAddButtonActionPerformed
-                Task newTask = new Task(startButton);
+                Task newTask = new Task(this, startButton);
                 newTask.setAlignmentY(Component.TOP_ALIGNMENT);
                 
                 taskPanel.add(newTask);
                 taskList.add(newTask);
-
+                taskCount += 1;
+                
                 // Revalidate and repaint the panel to show the new button
                 taskPanel.revalidate();
                 taskPanel.repaint();
@@ -470,6 +525,7 @@ public class StudyBomb extends javax.swing.JFrame {
             }
         }
         taskList.clear();
+        taskCount = 0;
         
         //Removes all task GUI elements, and revalidates/repaints the panel to reflect changes
         taskPanel.removeAll();
@@ -490,6 +546,7 @@ public class StudyBomb extends javax.swing.JFrame {
     /**
      * @param args the command line arguments
      */
+    
     
     
     public static void main(String args[]) {
@@ -517,8 +574,8 @@ public class StudyBomb extends javax.swing.JFrame {
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
             java.util.logging.Logger.getLogger(StudyBomb.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
-        //</editor-fold>
-        //</editor-fold>
+//        </editor-fold>
+//        </editor-fold>
 
         /* Create and display the form. */
         
@@ -540,6 +597,7 @@ public class StudyBomb extends javax.swing.JFrame {
     private javax.swing.JButton stopButton;
     private javax.swing.JButton taskAddButton;
     private javax.swing.JButton taskClearButton;
+    private javax.swing.JPanel taskControlPanel;
     private javax.swing.JPanel taskPanel;
     private javax.swing.JScrollPane taskScroll;
     private javax.swing.JLayeredPane taskView;
@@ -547,8 +605,7 @@ public class StudyBomb extends javax.swing.JFrame {
     private javax.swing.JFrame timerDialog;
     private javax.swing.JLabel timerDisplay;
     private javax.swing.JTextField timerInput;
-    private javax.swing.JPanel timerPanel;
-    private javax.swing.JLabel timerRuler;
+    private javax.swing.JLayeredPane timerPanel;
     private javax.swing.JLabel timerUI;
     // End of variables declaration//GEN-END:variables
 }
