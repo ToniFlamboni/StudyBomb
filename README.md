@@ -1,4 +1,4 @@
-# StudyBomb (WIP) - the timer & productivity program with consequences!
+# StudyRush (WIP) - the timer & productivity program with consequences!
 Note: This is a temporary README! More details forthcoming.
 
 
