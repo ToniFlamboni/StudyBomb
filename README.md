@@ -1,11 +1,25 @@
-# StudyRush (WIP) - the timer & productivity program with consequences!
-Note: This is a temporary README! More details forthcoming.
+# StudyRush
+## Overview
+StudyRush is a productivity timer designed to help users stay on track with their tasks. When the timer runs out, *StudyBomb will delete a user-specified directory as a consequence, adding an extra layer of motivation!
+- Important note: **StudyRush will also delete all subdirectories!**
 
+## Key Features
+- **Productivity Timer**: Set a time before the selected file is deleted. To facilitate productivity, this timer _cannot normally be paused._
+- **Task List** - Create a list of tasks. To stop the timer and prevent file deletion, all tasks must be completed.
 
-# Description
-This is a productivity timer that, with the user's consent, will delete a chosen filepath upon time running out. The only way to prevent this from occuring is completing all the tasks the user inputs before the timer begins.
+  - Create subtasks within tasks. To clear the task, all subtasks must be completed.
+  
+- **Safety Mechanisms**: 
+  - Confirmation prompts before timer begins.
+  - A grace period for file deletion if no activity has been detected for 5 minutes.
+  - An optional toggle to enable cancellation of the timer.
+    
+## How to Use
+1. Create a list of tasks/subtasks you'd like to get done.
+2. Allocate an appropriate amount of time, and set a directory for deletion.
+3. Press the start button, and get to work!
 
-# Why??
-I found that I worked best under strict deadlines and consequences, but self-imposed consequences are often difficult to enforce. This was my solution, I guess.
-
-If it wasn't obvious enough, all permanent actions are done with the user's explicit consent. Ample warnings and saveguards are provided, and the user can abort the timer at any time. I take no responsibility for lost or damaged files.
+## Getting Started
+1. Download the latest release from [GitHub Releases](link).
+2. Run the included executable.
+3. Enjoy increased productivity!
